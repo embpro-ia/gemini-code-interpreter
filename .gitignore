@@ -1,0 +1,16 @@
+# Ignorer les clés secrètes et variables d'environnement
+.env
+
+# Ignorer l'environnement virtuel Python
+venv/
+env/
+ENV/
+
+# Ignorer le cache et fichiers compilés Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Fichiers d'environnement d'éditeurs (optionnel)
+.vscode/
+.idea/
