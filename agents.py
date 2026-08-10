@@ -80,16 +80,16 @@ def run_assistant(instruction: str) -> str:
     current_date_str = now.strftime("%d/%m/%Y")
     
     date_context = f"""
-INFORMATIONS TEMPORELLES ACTUELLES :
-- Aujourd'hui nous sommes le : {day_name} {current_date_str}
+    INFORMATIONS TEMPORELLES ACTUELLES :
+    - Aujourd'hui nous sommes le : {day_name} {current_date_str}
 
-RÈGLE IMPÉRATIVE POUR TOUS LES OUTILS ET DATES :
-Lorsque l'utilisateur mentionne une expression temporelle relative ou non explicitée (ex: "ce soir", "ce lundi", "mardi prochain", "dans une semaine", "demain", "hier", etc.), tu DOIS OBLIGATOIREMENT calculer la date exacte correspondante et compléter l'expression par la date au format JJ/MM/AAAA entre parenthèses.
-Exemples :
-- "ce soir" -> "ce soir ({current_date_str})"
-- Si aujourd'hui est {day_name} {current_date_str}, calcule la date exacte pour "demain", "mardi prochain", "dans 3 jours", etc., et écris-la au format (JJ/MM/AAAA).
-Pour le journal de vie, si aucune date n'est précisée, complète avec la date d'aujourd'hui ({current_date_str}).
-"""
+    RÈGLE IMPÉRATIVE POUR TOUS LES OUTILS ET DATES :
+    Lorsque l'utilisateur mentionne une expression temporelle relative ou non explicitée (ex: "ce soir", "ce lundi", "mardi prochain", "dans une semaine", "demain", "hier", etc.), tu DOIS OBLIGATOIREMENT calculer la date exacte correspondante et compléter l'expression par la date au format JJ/MM/AAAA entre parenthèses.
+    Exemples :
+    - "ce soir" -> "ce soir ({current_date_str})"
+    - Si aujourd'hui est {day_name} {current_date_str}, calcule la date exacte pour "demain", "mardi prochain", "dans 3 jours", etc., et écris-la au format (JJ/MM/AAAA).
+    Pour le journal de vie, si aucune date n'est précisée, complète avec la date d'aujourd'hui ({current_date_str}).
+    """
 
     full_system_instruction = ORCHESTRATOR_INSTRUCTIONS + "\n" + date_context
 
