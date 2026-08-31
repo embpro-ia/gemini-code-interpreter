@@ -4,7 +4,10 @@ from dotenv import load_dotenv
 from google import genai
 from google.genai import types
 
-# Importer les outils Supabase qu'on a créés
+# Importation de l'abstraction Agent de Google ADK
+from google.adk.agents import Agent
+
+# Importer les outils Supabase
 from tools import (
     record_expense,
     record_income,
@@ -19,10 +22,9 @@ client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
 MODEL_ID = "gemini-3.5-flash"
 
 # =====================================================================
-# 1. SOUS-AGENTS SPÉCIALISÉS
+# 1. INSTRUCTIONS DES SOUS-AGENTS & ORCHESTRATEUR
 # =====================================================================
 
-# A. Sous-Agent Finance
 FINANCE_AGENT_INSTRUCTIONS = """
 Tu es un sous-agent spécialisé dans la gestion financière personnelle.
 - Ton rôle est d'analyser les entrées et sorties d'argent.
@@ -31,7 +33,6 @@ Tu es un sous-agent spécialisé dans la gestion financière personnelle.
 - Sois précis sur l'extraction des montants numériques.
 """
 
-# B. Sous-Agent Actions & Tâches
 LIFE_ACTION_AGENT_INSTRUCTIONS = """
 Tu es un sous-agent spécialisé dans la gestion des tâches et actions de vie.
 - Ton rôle est d'identifier les engagements, devoirs, rappels ou rendez-vous à exécuter.
@@ -39,7 +40,6 @@ Tu es un sous-agent spécialisé dans la gestion des tâches et actions de vie.
 - Extrais l'échéance ou la date si elle est précisée.
 """
 
-# C. Sous-Agent Journal de Vie
 JOURNAL_AGENT_INSTRUCTIONS = """
 Tu es un sous-agent spécialisé dans la tenue du journal de vie.
 - Ton rôle est de consigner un résumé des événements, faits marquants, réflexions, réunions passées ou moments de la journée
@@ -47,15 +47,6 @@ bref tout ce qui est en rapport avec ma vie personnelle dont j'aurais besoin de 
 - Si je n'ai pas donné la date de l'événement alors tu mets la date d'aujourd'hui.
 - Utilise l'outil 'add_journal_entry' pour enregistrer le résumé de l'événement.
 """
-
-# Outils regroupés par sous-agent
-FINANCE_TOOLS = [record_expense, record_income]
-LIFE_ACTION_TOOLS = [add_life_action]
-JOURNAL_TOOLS = [add_journal_entry]
-
-# =====================================================================
-# 2. ORCHESTRATEUR PRINCIPAL
-# =====================================================================
 
 ORCHESTRATOR_INSTRUCTIONS = """
 Tu es un Assistant Personnel Intelligent Multi-Agents.
@@ -66,14 +57,58 @@ Une seule phrase utilisateur peut contenir plusieurs intentions. Analyse-la mét
 2. S'il y a des tâches/actions futures à accomplir -> Enregistre l'action à réaliser.
 3. S'il y a des événements passés, anecdotes, réunions terminées ou notes de journée bref 
 tout ce qui est en rapport avec ma vie personnelle dont j'aurais besoin de me rappeler plus tard sans exception
--> Enregistre l'événement dans le journal de vie.   
+-> Enregistre l'événement dans le journal de vie.
 """
 
+# =====================================================================
+# 2. DÉCLARATION DES AGENTS ADK (Google ADK Architecture)
+# =====================================================================
+
+# Outils par domaine
+FINANCE_TOOLS = [record_expense, record_income]
+LIFE_ACTION_TOOLS = [add_life_action]
+JOURNAL_TOOLS = [add_journal_entry]
 ALL_TOOLS = FINANCE_TOOLS + LIFE_ACTION_TOOLS + JOURNAL_TOOLS
 
+# Definition des sous-agents ADK
+finance_agent = Agent(
+    name="FinanceAgent",
+    model=MODEL_ID,
+    instruction=FINANCE_AGENT_INSTRUCTIONS,
+    tools=FINANCE_TOOLS
+)
+
+life_action_agent = Agent(
+    name="LifeActionAgent",
+    model=MODEL_ID,
+    instruction=LIFE_ACTION_AGENT_INSTRUCTIONS,
+    tools=LIFE_ACTION_TOOLS
+)
+
+journal_agent = Agent(
+    name="JournalAgent",
+    model=MODEL_ID,
+    instruction=JOURNAL_AGENT_INSTRUCTIONS,
+    tools=JOURNAL_TOOLS
+)
+
+# Agent Orchestrateur Principal ADK
+orchestrator_agent = Agent(
+    name="PersonalAssistantOrchestrator",
+    model=MODEL_ID,
+    instruction=ORCHESTRATOR_INSTRUCTIONS,
+    tools=ALL_TOOLS
+)
+
+
+# =====================================================================
+# 3. FONCTION D'EXÉCUTION PRINCIPALE
+# =====================================================================
+
 def run_assistant(instruction: str) -> str:
-    """Exécute l'assistant sur une instruction utilisateur."""
+    """Exécute l'orchestrateur d'agents ADK sur une instruction utilisateur."""
     
+    # Calcul des éléments contextuels temporels
     now = datetime.now()
     french_days = ["lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi", "dimanche"]
     day_name = french_days[now.weekday()]
@@ -91,16 +126,17 @@ def run_assistant(instruction: str) -> str:
     Pour le journal de vie, si aucune date n'est précisée, complète avec la date d'aujourd'hui ({current_date_str}).
     """
 
-    full_system_instruction = ORCHESTRATOR_INSTRUCTIONS + "\n" + date_context
+    # Fusion des instructions système globales et temporelles
+    full_system_instruction = orchestrator_agent.instruction + "\n" + date_context
 
-    # Exécution de la requête avec appels d'outils automatiques (Function Calling)
+    # Exécution via les propriétés configurées sur l'agent ADK
     response = client.models.generate_content(
-        model=MODEL_ID,
+        model=orchestrator_agent.model,
         contents=instruction,
         config=types.GenerateContentConfig(
             system_instruction=full_system_instruction,
-            tools=ALL_TOOLS,
-            temperature=0.2, # Température basse pour une exécution rigoureuse des outils
+            tools=orchestrator_agent.tools,
+            temperature=0.2,
         )
     )
     
