@@ -43,6 +43,7 @@ class LegacyProcessRequest(BaseModel):
 # --- ENDPOINTS ---
 
 @app.get("/health", tags=["Health Check"])
+@app.get("/api/health", tags=["Health Check"])
 def health_check():
     """Vérification de l'état du service."""
     return {
@@ -54,6 +55,8 @@ def health_check():
 
 
 @app.get("/", response_class=HTMLResponse, tags=["Web UI"])
+@app.get("/api", response_class=HTMLResponse, include_in_schema=False)
+@app.get("/api/index.py", response_class=HTMLResponse, include_in_schema=False)
 def home_ui():
     """Interface web interactive pour tester directement l'agent dans le navigateur ou Hugging Face Spaces."""
     return """
