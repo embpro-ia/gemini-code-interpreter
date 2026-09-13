@@ -67,6 +67,11 @@ def home_ui():
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>Gemini Code Interpreter Agent</title>
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
+        <!-- Bibliothèques pour le rendu Markdown et Mathématiques -->
+        <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+        <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
         <style>
             body { max-width: 800px; margin: 0 auto; padding: 2rem 1rem; }
             .badge { display: inline-block; background: #0070f3; color: white; border-radius: 4px; padding: 0.2rem 0.5rem; font-size: 0.8rem; }
@@ -121,7 +126,16 @@ def home_ui():
                     const data = await res.json();
                     
                     if (res.ok) {
-                        agentText.innerText = data.response;
+                        agentText.innerHTML = marked.parse(data.response);
+                        renderMathInElement(agentText, {
+                            delimiters: [
+                                {left: "$$", right: "$$", display: true},
+                                {left: "\\[", right: "\\]", display: true},
+                                {left: "$", right: "$", display: false},
+                                {left: "\\(", right: "\\)", display: false}
+                            ]
+                        });
+                        
                         if (data.code_details && data.code_details.length > 0) {
                             codeOutput.innerText = JSON.stringify(data.code_details, null, 2);
                             codeSection.style.display = "block";
