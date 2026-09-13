@@ -76,7 +76,7 @@ def home_ui():
     </head>
     <body>
         <header>
-            <h1>🤖 Gemini Code Interpreter Agent</h1>
+            <h1>🤖 Gemini Code Interpreter Agent (Version 2.0)</h1>
             <p>Propulsé par Google Gemini (<code>gemini-3.5-flash-lite</code>) & Code Execution sandboxée.</p>
             <p><a href="/docs" target="_blank">📖 Documentation Swagger API (/docs)</a></p>
         </header>
