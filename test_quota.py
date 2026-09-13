@@ -39,19 +39,3 @@ try:
     print(f"   ✅ SUCCÈS : Réponse reçue -> {res.text.strip()[:80]}...")
 except Exception as e:
     print(f"   ❌ ÉCHEC : {e}")
-
-# Étape 3 : Appel avec Google Search uniquement
-print("\n3️⃣ Test : Google Search Grounding uniquement...")
-try:
-    res = client.models.generate_content(
-        model=model,
-        contents="Quel est le cours de l'action Apple aujourd'hui ?",
-        config=types.GenerateContentConfig(
-            tools=[types.Tool(google_search=types.GoogleSearch())]
-        )
-    )
-    print(f"   ✅ SUCCÈS : Réponse reçue -> {res.text.strip()[:80]}...")
-except Exception as e:
-    print(f"   ❌ ÉCHEC : {e}")
-
-print("\n--- Fin du diagnostic ---")
